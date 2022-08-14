@@ -1,5 +1,7 @@
 ## Getting Started
 
+A decentralized polling platform where users can create and interacts with polls.
+
 To run frontend :
 
 ```bash
