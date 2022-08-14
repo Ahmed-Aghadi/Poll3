@@ -1,0 +1,38 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/Poll3.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.9;\n\nimport \"./PollEntry.sol\";\n\ncontract Poll3 {\n    event EntryCreated(address pollEntry, address owner);\n\n    // mapping of owner => addresses of PollEntry.sol\n    mapping(address => address[]) entries;\n    // contract addresses of PollEntry.sol\n    address[] private pollEntries;\n\n    function createEntry(\n        string memory title,\n        string memory description,\n        string[] memory options\n    ) public returns (address) {\n        PollEntry pollEntry = new PollEntry(msg.sender, title, description, options);\n        entries[msg.sender].push(address(pollEntry));\n        pollEntries.push(address(pollEntry));\n        emit EntryCreated(address(pollEntry), msg.sender);\n        return address(pollEntry);\n    }\n\n    function getEntry(address ownerAddress) public view returns (address[] memory) {\n        return (entries[ownerAddress]);\n    }\n\n    function getPollEntry(uint256 index) public view returns (address) {\n        return (pollEntries[index]);\n    }\n\n    function getPollEntriesLength() public view returns (uint256) {\n        return (pollEntries.length);\n    }\n}\n"
+    },
+    "contracts/PollEntry.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.9;\n\nerror NotOwner();\nerror ZeroOption();\nerror PollEnded();\nerror InvalidOptionIndex();\nerror AlreadyVoted();\n\ncontract PollEntry {\n    address private immutable i_owner;\n    string private s_title;\n    string private s_description;\n    string[] private s_options;\n    // uint256[] private s_votes;\n    mapping(uint256 => uint256) private s_votes;\n    bool private s_is_poll_ended;\n\n    // mapping of voter to option number (option number start with 1)\n    mapping(address => uint256) private s_entries;\n\n    modifier onlyOwner() {\n        if (msg.sender != i_owner) revert NotOwner();\n        _;\n    }\n\n    constructor(\n        address owner,\n        string memory title,\n        string memory description,\n        string[] memory options\n    ) {\n        if (options.length == 0) {\n            revert ZeroOption();\n        }\n        i_owner = owner;\n        s_title = title;\n        s_description = description;\n        s_options = options;\n    }\n\n    function vote(uint256 option_index) public {\n        if (s_is_poll_ended) {\n            revert PollEnded();\n        }\n        if (!(option_index >= 0 && option_index <= s_options.length)) {\n            revert InvalidOptionIndex();\n        }\n        if (s_entries[msg.sender] != 0) {\n            revert AlreadyVoted();\n        }\n\n        s_votes[option_index] += 1;\n        s_entries[msg.sender] = option_index + 1;\n    }\n\n    function endPoll() public onlyOwner {\n        s_is_poll_ended = true;\n    }\n\n    function getOwner() public view returns (address) {\n        return i_owner;\n    }\n\n    function getTitle() public view returns (string memory) {\n        return s_title;\n    }\n\n    function getDescription() public view returns (string memory) {\n        return s_description;\n    }\n\n    function getOptionsLength() public view returns (uint256) {\n        return s_options.length;\n    }\n\n    function getOption(uint256 index) public view returns (string memory) {\n        return s_options[index];\n    }\n\n    function getVotes(uint256 index) public view returns (uint256) {\n        return s_votes[index];\n    }\n\n    function getEntry(address voterAddress) public view returns (uint256) {\n        return s_entries[voterAddress];\n    }\n\n    function getIsPollEnded() public view returns (bool) {\n        return s_is_poll_ended;\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
